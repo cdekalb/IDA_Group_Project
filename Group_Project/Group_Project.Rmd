@@ -1,27 +1,34 @@
+---
+title: "IDA 5103 Group Project Initial Draft"
+author: "Creighton DeKalb (cdekalb@ou.edu), Kevin Oberlag (koberlag@ou.edu), Mandy Chan (mandychan@ou.edu)"
+date: "November 26, 2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(caret)
+```
 
 # Introduction to the problem
 
-# The problem we want to examine is the prediction of the winner of the 2019-2020 NBA champion.
+The problem we want to examine is the prediction of an NBA Finals berth for all 2019-2020 NBA teams.
 
 # Description of the data
 
-# Our data is the total season stats for every NBA team since the implementation of the 3-point line (the 1979-1980 season). We
-# chose this because it gives us a sufficient amount of data, while also minimizing missingness, namely the 3-point stats for
-# each team before the 1979-1980 being NA's. Our intial data only contained in-game statistics and did not give us any data for
-# the team from an overal season perspective; thus through additional research, we added columns pertaining to whether a given
-# team for a given season won the championship. We also added a column noting whether a given team made the NBA finals for that
-# season.
+Our data is the total season stats for every NBA team since the implementation of the 3-point line (the 1979-1980 season). We chose this because it gives us a sufficient amount of data, while also minimizing missingness, namely since the 3-point stats for each team before the 1979-1980 are NA's. Our intial data only contained in-game statistics and did not give us any data for the team from an overal season perspective; thus through additional research, we added columns pertaining to whether a given team for a given season won the championship. We also added a column noting whether a given team made the NBA finals for that season.
 
 # Exploratory data analysis
 
-# Preprocessing
+## Preprocessing
 
+```{r, message=FALSE}
 # read in teams data
 teams <- read_csv("teams.csv")
-
-head(teams)
 
 # change variable type for the factor variables
 teams$Champion <- as.logical(teams$Champion)
@@ -48,50 +55,78 @@ set.seed(4)
 sampleRows <- sample(1:nrow(teams), noTrainRows, replace = F)
 trainData <- teams[sampleRows,]
 testData <- teams[-sampleRows,]
+```
 
-# Plot exploration
+## Plot exploration
 
+We have created boxplots to show the distributions of all teams in our data that did not make the Finals compared to teams that did for the statistics that we created.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`FG%`)) + geom_boxplot() + labs(x = "Finals", y = "FG%")
-# FG% appears to be a decent predictor of Finals
+```
 
+FG% appears to be a decent predictor of Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`2P%`)) + geom_boxplot() + labs(x = "Finals", y = "2P%")
-# 2P% appears to be a decent predictor of Finals
+```
 
+2P% appears to be a decent predictor of Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`3P%`)) + geom_boxplot() + labs(x = "Finals", y = "3P%")
-# 3P% appears to have little to no correlation with Finals
+```
 
+3P% appears to have little to no correlation with Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`FT%`)) + geom_boxplot() + labs(x = "Finals", y = "FT%")
-# FT% appears to have little to no correlation with Finals
+```
 
+FT% appears to have little to no correlation with Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$TRBperG)) + geom_boxplot() + labs(x = "Finals", y = "TRBperG")
-# TRBperG appears to be a decent predictor of Finals
+```
 
+TRBperG appears to be a decent predictor of Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$ASTperG)) + geom_boxplot() + labs(x = "Finals", y = "ASLperG")
-# ASTperG appears to be a decent predictor of Finals
+```
 
+ASTperG appears to be a decent predictor of Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$STLperG)) + geom_boxplot() + labs(x = "Finals", y = "STLperG")
-# STLperG appears to have minimal correlation with Finals
+```
 
+STLperG appears to have minimal correlation with Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$BLKperG)) + geom_boxplot() + labs(x = "Finals", y = "BLKperG")
-# BLKperG appears to have minimal correlation with Finals
+```
 
+BLKperG appears to have minimal correlation with Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$PTSperG)) + geom_boxplot() + labs(x = "Finals", y = "PTSperG")
-# PTSperG appears to have minimal correlation with Finals
+```
 
+PTSperG appears to have minimal correlation with Finals.
+
+```{r}
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`W/L%`)) + geom_boxplot() + labs(x = "Finals", y = "W/L%")
-# W/L% appears to be a very good predictor of Finals
+```
+
+W/L% appears to be a very good predictor of Finals.
 
 # Description of modeling approach
 
-# We used a generalized linear model on our training data to implement logistic regression, with logLoss as our accuracy 
-# measurement. Our intial choices for model features were the features that we created, in addition to W/L%. We chose these
-# because they scale each team data so that team data can be compared across years. From our exploratory data analysis, we
-# expected 3P%, FT%, STLperG, BLKperG, and PTSperG to not be significant predictors in our generalized linear model. However,
-# after running our model we found that the set of features 2P%, 3P%, TRBperG, ASTperG, PTSperG, and W/L% provides the best
-# performing model, as found by taking our original model and removing insignificant features until our model AIC was minimized.
+We used a generalized linear model on our training data to implement logistic regression, with logLoss as our accuracy  measurement. Our intial choices for model features were the features that we created, in addition to W/L%. We chose these because they scale each team data so that team data can be compared across years. From our exploratory data analysis, we expected 3P%, FT%, STLperG, BLKperG, and PTSperG to not be significant predictors in our generalized linear model. However, after running our model we found that the set of features 2P%, 3P%, TRBperG, ASTperG, PTSperG, and W/L% provides the best performing model, as found by taking our original model and removing insignificant features until our model AIC was minimized.
 
-# In the future, we plan on implementing other logisitc regression techniques to see how mour model can be improved.
 
+```{r, message=FALSE}
 control = trainControl(method = "repeatedcv", 
                        number = 3, 
                        classProbs = TRUE, 
@@ -116,13 +151,10 @@ testData <- teams[-sampleRows,]
 
 actual <- as.numeric(trainData$Finals)
 
-
 m <- confusionMatrix(as.factor(pred), as.factor(actual), positive="1")
-
 m
+```
 
 # Initial results
 
-
-
-
+The logLoss value of our generalized linear model is 0.142 and our confusion matrix has an accuracy of 0.957. We are planning on using alternative modeling techniques to find the best possible method of logistic regression for our problem. Additionally, we are planning to evaluate our problem as a time series problem. Since this class does not cover any techniques regarding time series, we will likely have to do more independent research to best tackle our problem.
