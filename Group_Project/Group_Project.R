@@ -21,6 +21,10 @@ library(caret)
 # read in teams data
 teams <- read_csv("teams.csv")
 
+# read in players data
+players <- read_csv("players.csv") 
+player_team <- players %>% left_join(teams, by=c("Tm","Season"))
+
 head(teams)
 
 # change variable type for the factor variables
