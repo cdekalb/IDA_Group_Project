@@ -43,6 +43,7 @@ teams$ASTperG <- teams$AST / teams$G
 teams$STLperG <- teams$STL / teams$G
 teams$BLKperG <- teams$BLK / teams$G
 teams$PTSperG <- teams$PTS / teams$G
+teams$PFperG <- teams$PF / teams$G
 
 head(teams)
 
@@ -82,6 +83,9 @@ ggplot(data = teams, aes(x = teams$Finals, y = teams$BLKperG)) + geom_boxplot() 
 ggplot(data = teams, aes(x = teams$Finals, y = teams$PTSperG)) + geom_boxplot() + labs(x = "Finals", y = "PTSperG")
 # PTSperG appears to have minimal correlation with Finals
 
+ggplot(data = teams, aes(x = teams$Finals, y = teams$PFperG)) + geom_boxplot() + labs(x = "Finals", y = "PFperG")
+# PFperG appears to have minimal correlation with Finals
+
 ggplot(data = teams, aes(x = teams$Finals, y = teams$`W/L%`)) + geom_boxplot() + labs(x = "Finals", y = "W/L%")
 # W/L% appears to be a very good predictor of Finals
 
@@ -97,12 +101,12 @@ ggplot(data = teams, aes(x = teams$Finals, y = teams$`W/L%`)) + geom_boxplot() +
 # In the future, we plan on implementing other logisitc regression techniques to see how mour model can be improved.
 
 control = trainControl(method = "repeatedcv", 
-                       number = 3, 
+                       number = 10, 
                        classProbs = TRUE, 
                        summaryFunction=mnLogLoss, 
                        verboseIter = TRUE)
 
-glm_fit = train(Finals ~ `2P%` + `3P%` + TRBperG + ASTperG + PTSperG + `W/L%`, 
+glm_fit = train(Finals ~ `2P%` + `3P%` + `W/L%` + PFperG, 
                 data= trainData, 
                 method = "glm", 
                 family = binomial(), 
@@ -111,6 +115,11 @@ glm_fit = train(Finals ~ `2P%` + `3P%` + TRBperG + ASTperG + PTSperG + `W/L%`,
                 preProcess = c("center", "scale")) #important to set metric to logLoss to tune for logloss minimization
 
 summary(glm_fit)
+
+glm_predictions <-predict(object=glm_fit, newdata = testData, type="prob")[,2]
+
+glmSubmission<-tibble(Team=testData$Tm, Season=testData$Season, predProbOfFinalsBerth=glm_predictions, predFinalsBerth=glm_predictions>0.5)
+
 
 pred <- as.numeric(glm_fit$finalModel$fitted.values>0.5)
 
